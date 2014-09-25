@@ -26,7 +26,13 @@ using namespace std;
 
 void Print (const vector<string>& v);
 
-int main(int argc, char **argv) {
+class Coordinator{
+  public:
+    int start_coordinator();
+    void start_chat(string msg);
+};
+
+int Coordinator::start_coordinator(){
   struct sockaddr_in myaddr;  
   struct sockaddr_in remaddr; 
   socklen_t addrlen = sizeof(remaddr);    
@@ -35,6 +41,7 @@ int main(int argc, char **argv) {
   int msgcnt = 0;
   char buf[BUFSIZE];
   vector<string> msg;
+  map<string, string> sessions;
   char * pch;
 
   if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
@@ -72,6 +79,7 @@ int main(int argc, char **argv) {
 
     if (msg[0] == "Start"){
       cout << "Starting chat " << msg[1] << endl;
+      start_chat(msg[1]);
     } else if (msg[0] == "Find"){
       cout << "Finding chat " << msg[1] << endl;
     } else if (msg[0] == "Terminate"){
@@ -86,6 +94,14 @@ int main(int argc, char **argv) {
       perror("sendto");
     }
   }
+
+  return 0;
+}
+
+int main(int argc, char **argv) {
+  Coordinator coordinator;
+  coordinator.start_coordinator();
+  return 0;
 }
 
 void Print (const vector<string>& v){
