@@ -16,20 +16,24 @@
 
 #include <string>
 #include <map>
+#include <sstream>
 #include <iostream>
 #include <vector>
 
 using namespace std;
 
 #define SERVICE_PORT  21234
+#define MAXLEN 80
 #define BUFSIZE 2048
 
 void Print (const vector<string>& v);
 
 class Coordinator{
+    map<string, string> sessions;
   public:
     int start_coordinator();
-    void start_chat(string msg);
+    string start_chat(string msg);
+    int passivesock();
 };
 
 int Coordinator::start_coordinator(){
@@ -37,12 +41,12 @@ int Coordinator::start_coordinator(){
   struct sockaddr_in remaddr; 
   socklen_t addrlen = sizeof(remaddr);    
   int recvlen; 
-  int fd;
+  int fd, i;
   int msgcnt = 0;
-  char buf[BUFSIZE];
+  string result;
   vector<string> msg;
-  map<string, string> sessions;
   char * pch;
+  char buf[BUFSIZE];
 
   if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
     perror("cannot create socket\n");
@@ -60,6 +64,7 @@ int Coordinator::start_coordinator(){
   }
 
   while (true) {
+
     printf("waiting on port %d\n", SERVICE_PORT);
     recvlen = recvfrom(fd, buf, BUFSIZE, 0, (struct sockaddr *)&remaddr, 
                        &addrlen);
@@ -67,19 +72,14 @@ int Coordinator::start_coordinator(){
       buf[recvlen] = 0;
       printf("received message: \"%s\" (%d bytes)\n", buf, recvlen);
     }
-    else{
-      printf("uh oh - something went wrong!\n");
-    } 
 
-    pch = strtok (buf," ,.-");
-    while (pch != NULL){
-      msg.push_back(pch);
-      pch = strtok (NULL, " ,.-");
-    }
+    stringstream ss(buf);
+    while (ss >> buf)
+        msg.push_back(buf);
 
     if (msg[0] == "Start"){
       cout << "Starting chat " << msg[1] << endl;
-      start_chat(msg[1]);
+      result = start_chat(msg[1]);
     } else if (msg[0] == "Find"){
       cout << "Finding chat " << msg[1] << endl;
     } else if (msg[0] == "Terminate"){
@@ -90,12 +90,46 @@ int Coordinator::start_coordinator(){
 
     printf("sending response \"%s\"\n", buf);
     
-    if (sendto(fd, buf, 20, 0, (struct sockaddr *)&remaddr, addrlen) < 0){
+    if (sendto(fd, buf, MAXLEN, 0, (struct sockaddr *)&remaddr, addrlen) < 0){
       perror("sendto");
     }
+    fill_n(buf, BUFSIZE, ""); 
+    msg.clear();
+
+  }
+  return 0;
+}
+
+string Coordinator::start_chat(string msg){
+  if (sessions.count(msg)){
+    return "-1";
+  } else {
+    sessions[msg] = passivesock();
+    return sessions[msg];
+  }
+}
+
+int Coordinator::passivesock(){
+  struct sockaddr_in sin; /* an Internet endpoint address  */
+  int     s;              /* socket descriptor             */
+
+  memset(&sin, 0, sizeof(sin));
+  sin.sin_family = AF_INET;
+  sin.sin_addr.s_addr = INADDR_ANY;
+  sin.sin_port = htons(0);
+
+  /* Allocate a socket */
+  s = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+  if (s < 0)
+    cout << "can't create socket" << endl;
+
+  /* Bind the socket */
+  if (bind(s, (struct sockaddr *)&sin, sizeof(sin)) < 0){
+    cout << "binding failed" << endl;
   }
 
-  return 0;
+  cout << "bound to port " << s << endl;
+  return s;
 }
 
 int main(int argc, char **argv) {

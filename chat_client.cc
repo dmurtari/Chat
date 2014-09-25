@@ -11,7 +11,7 @@
 
 using namespace std;
 
-#define BUFLEN 2048
+#define BUFSIZE 2048
 #define MAXLEN 80
 #define MSGS 5
 #define SERVICE_PORT  21234
@@ -21,7 +21,7 @@ int main(void) {
   string msg;
   int fd, i;
   socklen_t slen=sizeof(remaddr);
-  char buf[BUFLEN];
+  char buf[BUFSIZE];
   int recvlen;
   size_t msglen;
   char *coordinator = "127.0.0.1";
@@ -57,11 +57,12 @@ int main(void) {
       exit(1);
     }
 
-    recvlen = recvfrom(fd, buf, BUFLEN, 0, (struct sockaddr *)&remaddr, &slen);
+    recvlen = recvfrom(fd, buf, BUFSIZE, 0, (struct sockaddr *)&remaddr, &slen);
     if (recvlen >= 0) {
       buf[recvlen] = 0;
       printf("Coordinator received message: \"%s\"\n", buf);
     }
+    fill_n(buf, msglen, NULL); 
   }
   close(fd);
   return 0;
