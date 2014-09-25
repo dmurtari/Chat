@@ -14,13 +14,17 @@
 #include <string.h>
 #include <stdio.h>
 
+#include <string>
 #include <map>
+#include <iostream>
 #include <vector>
 
 using namespace std;
 
 #define SERVICE_PORT  21234
 #define BUFSIZE 2048
+
+void Print (const vector<string>& v);
 
 int main(int argc, char **argv) {
   struct sockaddr_in myaddr;  
@@ -30,7 +34,7 @@ int main(int argc, char **argv) {
   int fd;
   int msgcnt = 0;
   char buf[BUFSIZE];
-  //vector<string> msg;
+  vector<string> msg;
   char * pch;
 
   if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
@@ -61,10 +65,19 @@ int main(int argc, char **argv) {
     } 
 
     pch = strtok (buf," ,.-");
-    while (pch != NULL)
-    {
-      printf ("%s\n",pch);
+    while (pch != NULL){
+      msg.push_back(pch);
       pch = strtok (NULL, " ,.-");
+    }
+
+    if (msg[0] == "Start"){
+      cout << "Starting chat " << msg[1] << endl;
+    } else if (msg[0] == "Find"){
+      cout << "Finding chat " << msg[1] << endl;
+    } else if (msg[0] == "Terminate"){
+      cout << "Terminating chat " << msg[1] << endl;
+    } else {
+      cout << "Command not recognized" << endl;
     }
 
     printf("sending response \"%s\"\n", buf);
@@ -72,6 +85,13 @@ int main(int argc, char **argv) {
     if (sendto(fd, buf, 20, 0, (struct sockaddr *)&remaddr, addrlen) < 0){
       perror("sendto");
     }
+  }
+}
+
+void Print (const vector<string>& v){
+  //vector<int> v;
+  for (int i=0; i<v.size();i++){
+    cout << v[i] << " ";
   }
 }
 

@@ -58,10 +58,10 @@ int main(void) {
     }
 
     recvlen = recvfrom(fd, buf, BUFLEN, 0, (struct sockaddr *)&remaddr, &slen);
-                if (recvlen >= 0) {
-                        buf[recvlen] = 0; /* expect a printable string - terminate it */
-                        printf("received message: \"%s\"\n", buf);
-                }
+    if (recvlen >= 0) {
+      buf[recvlen] = 0;
+      printf("Coordinator received message: \"%s\"\n", buf);
+    }
   }
   close(fd);
   return 0;
