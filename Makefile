@@ -1,5 +1,5 @@
 #Makefile
-CC = gcc
+CC = g++
 INCLUDE = /usr/lib
 LIBS = 
 OBJS = 

@@ -15,22 +15,23 @@
 #include <stdio.h>
 
 #include <map>
+#include <vector>
 
 using namespace std;
 
 #define SERVICE_PORT  21234
 #define BUFSIZE 2048
 
-int
-main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
   struct sockaddr_in myaddr;  
   struct sockaddr_in remaddr; 
   socklen_t addrlen = sizeof(remaddr);    
   int recvlen; 
   int fd;
   int msgcnt = 0;
-  unsigned char buf[BUFSIZE];
+  char buf[BUFSIZE];
+  //vector<string> msg;
+  char * pch;
 
   if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
     perror("cannot create socket\n");
@@ -47,15 +48,23 @@ main(int argc, char **argv)
     return 0;
   }
 
-  for (;;) {
+  while (true) {
     printf("waiting on port %d\n", SERVICE_PORT);
-    recvlen = recvfrom(fd, buf, BUFSIZE, 0, (struct sockaddr *)&remaddr, &addrlen);
+    recvlen = recvfrom(fd, buf, BUFSIZE, 0, (struct sockaddr *)&remaddr, 
+                       &addrlen);
     if (recvlen > 0) {
       buf[recvlen] = 0;
       printf("received message: \"%s\" (%d bytes)\n", buf, recvlen);
     }
     else{
       printf("uh oh - something went wrong!\n");
+    } 
+
+    pch = strtok (buf," ,.-");
+    while (pch != NULL)
+    {
+      printf ("%s\n",pch);
+      pch = strtok (NULL, " ,.-");
     }
 
     printf("sending response \"%s\"\n", buf);
@@ -65,3 +74,4 @@ main(int argc, char **argv)
     }
   }
 }
+
