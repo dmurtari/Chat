@@ -40,7 +40,7 @@ int Coordinator::start_coordinator(){
   struct sockaddr_in myaddr;  
   struct sockaddr_in remaddr; 
   socklen_t addrlen = sizeof(remaddr);    
-  int recvlen; 
+  int recvlen, msglen; 
   int fd, i;
   int msgcnt = 0;
   string result;
@@ -76,10 +76,11 @@ int Coordinator::start_coordinator(){
     stringstream ss(buf);
     while (ss >> buf)
         msg.push_back(buf);
+    fill_n(buf, BUFSIZE, NULL); 
 
     if (msg[0] == "Start"){
       cout << "Starting chat " << msg[1] << endl;
-      result = start_chat(msg[1]);
+      cout << start_chat(msg[1]) << endl;
     } else if (msg[0] == "Find"){
       cout << "Finding chat " << msg[1] << endl;
     } else if (msg[0] == "Terminate"){
@@ -87,13 +88,14 @@ int Coordinator::start_coordinator(){
     } else {
       cout << "Command not recognized" << endl;
     }
-
-    printf("sending response \"%s\"\n", buf);
     
+    msglen = result.copy(buf, result.length(), 0);
+    printf("sending response \"%s\"\n", buf);
+
     if (sendto(fd, buf, MAXLEN, 0, (struct sockaddr *)&remaddr, addrlen) < 0){
       perror("sendto");
     }
-    fill_n(buf, BUFSIZE, ""); 
+    fill_n(buf, BUFSIZE, NULL); 
     msg.clear();
 
   }
@@ -139,7 +141,6 @@ int main(int argc, char **argv) {
 }
 
 void Print (const vector<string>& v){
-  //vector<int> v;
   for (int i=0; i<v.size();i++){
     cout << v[i] << " ";
   }
