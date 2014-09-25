@@ -26,3 +26,8 @@
 *.exe
 *.out
 *.app
+
+*~
+chat_client
+chat_coordinator
+chat_server
