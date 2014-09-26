@@ -126,6 +126,7 @@ uint16_t Coordinator::start_chat(string chat_name){
       cout << "Fork failed" << endl;
     if (pid == 0){
       sprintf(arg, "%d", tcp_sock);
+      cout << "Started socket " << arg << endl;
       if(execl("chat_server", arg, NULL) < 0)
         cout << "Exec failed" << endl;
     }
