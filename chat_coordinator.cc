@@ -29,11 +29,12 @@ using namespace std;
 void Print (const vector<string>& v);
 
 class Coordinator{
-    map<string, string> sessions;
+    map<string, uint16_t> sessions;
   public:
     int start_coordinator();
-    string start_chat(string msg);
-    int passivesock();
+    uint16_t start_chat(string chat_name);
+    uint16_t find_chat(string chat_name);
+    uint16_t passivesock();
 };
 
 int Coordinator::start_coordinator(){
@@ -43,7 +44,7 @@ int Coordinator::start_coordinator(){
   int recvlen, msglen; 
   int fd, i;
   int msgcnt = 0;
-  string result;
+  uint16_t result;
   vector<string> msg;
   char * pch;
   char buf[BUFSIZE];
@@ -79,17 +80,22 @@ int Coordinator::start_coordinator(){
     fill_n(buf, BUFSIZE, NULL); 
 
     if (msg[0] == "Start"){
-      cout << "Starting chat " << msg[1] << endl;
-      cout << start_chat(msg[1]) << endl;
+      result = start_chat(msg[1]);
     } else if (msg[0] == "Find"){
-      cout << "Finding chat " << msg[1] << endl;
+      result = find_chat(msg[1]);
     } else if (msg[0] == "Terminate"){
       cout << "Terminating chat " << msg[1] << endl;
     } else {
       cout << "Command not recognized" << endl;
     }
     
-    msglen = result.copy(buf, result.length(), 0);
+    //msglen = result.copy(buf, result.length(), 0);
+    if (result == 0){
+      sprintf(buf, "%d", -1);
+    } else{
+      sprintf(buf, "%d", result);
+    }
+    
     printf("sending response \"%s\"\n", buf);
 
     if (sendto(fd, buf, MAXLEN, 0, (struct sockaddr *)&remaddr, addrlen) < 0){
@@ -102,16 +108,30 @@ int Coordinator::start_coordinator(){
   return 0;
 }
 
-string Coordinator::start_chat(string msg){
-  if (sessions.count(msg)){
-    return "-1";
+uint16_t Coordinator::start_chat(string chat_name){
+  if (sessions.count(chat_name)){
+    cout << "Chat " << chat_name << " already exists." << endl;
+    return 0;
   } else {
-    sessions[msg] = passivesock();
-    return sessions[msg];
+    sessions[chat_name] = passivesock();
+    cout << "Creating chat " << chat_name << " on port " << sessions[chat_name] 
+         << endl;
+    return sessions[chat_name];
   }
 }
 
-int Coordinator::passivesock(){
+uint16_t Coordinator::find_chat(string chat_name){
+  if (sessions.count(chat_name)){
+    cout << "Found chat " << chat_name << endl;
+    return sessions[chat_name];
+  } else {
+    cout << "Can't find chat " << chat_name << endl;
+    return 0;
+  }
+}
+
+
+uint16_t Coordinator::passivesock(){
   struct sockaddr_in sin; /* an Internet endpoint address  */
   int     s;              /* socket descriptor             */
 
@@ -129,6 +149,10 @@ int Coordinator::passivesock(){
   if (bind(s, (struct sockaddr *)&sin, sizeof(sin)) < 0){
     cout << "binding failed" << endl;
   }
+
+  socklen_t socklen = sizeof(sin);
+  getsockname(s, (struct sockaddr *)&sin, &socklen);
+  s = ntohs(sin.sin_port);
 
   cout << "bound to port " << s << endl;
   return s;
