@@ -10,6 +10,7 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+#include <vector>
 
 using namespace std;
 
@@ -23,8 +24,9 @@ int main(int argc, char *argv[]) {
   int port;
   int fd, i;
   socklen_t slen=sizeof(remaddr);
-  char buf[BUFSIZE];
+  char buf[BUFSIZE], buf1[BUFSIZE];
   int recvlen;
+  vector<string> msg_vec;
   size_t msglen;
   char *coordinator = argv[1];
   stringstream strValue; 
@@ -58,7 +60,23 @@ int main(int argc, char *argv[]) {
     cout << "> "; 
     getline(cin, msg);
     msglen = msg.copy(buf, msg.length(), 0);
-    
+    msglen = msg.copy(buf1, msg.length(), 0);
+
+    stringstream ss(buf1);
+    while (ss >> buf1)
+      msg_vec.push_back(buf1);
+    fill_n(buf1, BUFSIZE, NULL); 
+
+    if (msg_vec[0] == "Start"){
+      cout << "Got a start";
+    } else if (msg_vec[0] == "Find"){
+      cout << "Got a find";
+    } else if (msg_vec[0] == "Terminate"){
+      cout << "Terminating chat " << msg_vec[1] << endl;
+    } else {
+      cout << "Command not recognized" << endl;
+    }
+
     if (sendto(fd, buf, MAXLEN, 0, (struct sockaddr *)&remaddr, slen)==-1) {
       perror("sendto");
       exit(1);
