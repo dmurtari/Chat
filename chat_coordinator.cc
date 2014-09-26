@@ -7,6 +7,8 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <arpa/inet.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 
 #include <stdarg.h>
 #include <unistd.h>
@@ -110,14 +112,12 @@ int Coordinator::start_coordinator(){
 uint16_t Coordinator::start_chat(string chat_name){
   pid_t pid;
   char arg[BUFSIZE];
+  char buf1[BUFSIZE];
 
   if (sessions.count(chat_name)){
     cout << "Chat " << chat_name << " already exists." << endl;
     return 0;
   } else {
-    sessions[chat_name] = passivesock();
-    cout << "Creating chat " << chat_name << " on port " << sessions[chat_name] 
-         << endl;
     if((pid = fork()) < 0)
       cout << "Fork failed" << endl;
     if (pid == 0){
@@ -125,6 +125,18 @@ uint16_t Coordinator::start_chat(string chat_name){
       if(execl("chat_server", arg, NULL) < 0)
         cout << "Exec failed" << endl;
     }
+
+    int pipe = open("/tmp/myFIFO", O_RDONLY);
+    read(pipe, buf1, BUFSIZE);
+    close(pipe);
+
+    stringstream strValue;
+    strValue << buf1;
+
+    uint16_t port;
+    strValue >> port;
+
+    sessions[chat_name] = port;
     return sessions[chat_name];
   }
 }
