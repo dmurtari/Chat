@@ -13,7 +13,6 @@ using namespace std;
 
 #define BUFSIZE 2048
 #define MAXLEN 80
-#define MSGS 5
 #define SERVICE_PORT  21234
 
 int main(void) {

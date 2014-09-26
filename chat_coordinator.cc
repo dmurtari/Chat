@@ -109,6 +109,7 @@ int Coordinator::start_coordinator(){
 
 uint16_t Coordinator::start_chat(string chat_name){
   pid_t pid;
+  char arg[BUFSIZE];
 
   if (sessions.count(chat_name)){
     cout << "Chat " << chat_name << " already exists." << endl;
@@ -120,7 +121,8 @@ uint16_t Coordinator::start_chat(string chat_name){
     if((pid = fork()) < 0)
       cout << "Fork failed" << endl;
     if (pid == 0){
-      if(execl("chat_server", "0", NULL) < 0)
+      sprintf(arg, "%d", sessions[chat_name]);
+      if(execl("chat_server", arg, NULL) < 0)
         cout << "Exec failed" << endl;
     }
     return sessions[chat_name];
