@@ -65,40 +65,6 @@ int Server::start_server(int tcpsocket){
       }    
     }
   }
-  
-  /*
-  char buf[BUFSIZE];
-  int svc;        
-  int rqst;      
-  int port;
-  socklen_t alen;       
-  struct sockaddr_in my_addr;   
-  struct sockaddr_in sin;
-  struct sockaddr_in client_addr;  
-  int sockoptval = 1;
-  char hostname[128]; 
-
-
-
-  cout << "Socket is " << tcpsocket << endl;
-
-  
-  alen = sizeof(client_addr);    
-
-  while (true) {
-    cout << "Looping again" << endl;
-    rqst = accept(tcpsocket, (struct sockaddr *)&client_addr, &alen);
-
-    printf("received a connection from: %s port %d\n",
-      inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
-          shutdown(rqst, 2);    
-
-    while (true){
-      int nbytes = read(rqst, buf, BUFSIZE);
-      cout << "Read " << nbytes << " bytes and Buf is: " << buf << endl;
-    }
-  }
-  */
 }
 
 int main(int argc, char *argv[]) {
