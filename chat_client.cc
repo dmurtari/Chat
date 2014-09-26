@@ -33,6 +33,7 @@ int main(int argc, char *argv[]) {
   size_t msglen;
   char *coordinator = argv[1];
   stringstream strValue; 
+  bool started_sock = false;
 
   strValue << argv[2];
   strValue >> port;
@@ -82,13 +83,12 @@ int main(int argc, char *argv[]) {
         printf("Coordinator received message: \"%s\"\n", buf);
       }
     } else if (msg_vec[0] == "Submit"){
-      tcp_sock = connectsock("localhost", port);
-      
-      while (fgets(buf, sizeof(buf), stdin)) {
-        // buf[LINELEN] = '\0';
-        int outchars = strlen(buf);
-        (void) write(tcp_sock, buf, outchars);
+      if (!started_sock){
+        tcp_sock = connectsock("localhost", port);
+        started_sock = true;
       }
+      cout << "Writing " << buf << " to socket" << endl;
+      int nbytes = write(tcp_sock, buf, BUFSIZE);
     } else {
       cout << "Command not recognized" << endl;
     }
