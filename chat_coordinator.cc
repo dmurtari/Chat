@@ -89,13 +89,12 @@ int Coordinator::start_coordinator(){
       cout << "Command not recognized" << endl;
     }
     
-    //msglen = result.copy(buf, result.length(), 0);
     if (result == 0){
       sprintf(buf, "%d", -1);
     } else{
       sprintf(buf, "%d", result);
     }
-    
+
     printf("sending response \"%s\"\n", buf);
 
     if (sendto(fd, buf, MAXLEN, 0, (struct sockaddr *)&remaddr, addrlen) < 0){
@@ -109,6 +108,8 @@ int Coordinator::start_coordinator(){
 }
 
 uint16_t Coordinator::start_chat(string chat_name){
+  pid_t pid;
+
   if (sessions.count(chat_name)){
     cout << "Chat " << chat_name << " already exists." << endl;
     return 0;
@@ -116,6 +117,12 @@ uint16_t Coordinator::start_chat(string chat_name){
     sessions[chat_name] = passivesock();
     cout << "Creating chat " << chat_name << " on port " << sessions[chat_name] 
          << endl;
+    if((pid = fork()) < 0)
+      cout << "Fork failed" << endl;
+    if (pid == 0){
+      if(execl("chat_server", "0", NULL) < 0)
+        cout << "Exec failed" << endl;
+    }
     return sessions[chat_name];
   }
 }
