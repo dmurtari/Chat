@@ -19,15 +19,23 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <vector>
+#include <map>
 
 #define BUFSIZE 2048
 
 using namespace std;
 
+void Print (const vector<string>& v);
+
 class Server{
     int echo(int fd);
+    vector<string> msgs;
+    vector<string> msg;
+    map<int, int> clients;
   public: 
     int start_server(int tcpsocket);
+    string combine_msg(vector<string> msg);
 };
 
 int Server::start_server(int tcpsocket){
@@ -38,6 +46,7 @@ int Server::start_server(int tcpsocket){
   fd_set  afds;     /* active file descriptor set */
   unsigned int  alen;   /* from-address length    */
   int fd, nfds;
+  string command, char_count;
 
   msock = tcpsocket;
 
@@ -57,14 +66,41 @@ int Server::start_server(int tcpsocket){
       if (ssock < 0)
         printf("accept: %s\n", strerror(errno));
       FD_SET(ssock, &afds);
+
     }
+
     for (fd=0; fd<nfds; ++fd){
       if (fd != msock && FD_ISSET(fd, &rfds)){
         int nbytes = read(ssock, buf, BUFSIZE);
-        cout << "Read " << nbytes << " bytes and Buf is: " << buf << endl;  
+        cout << "Read " << buf << endl;
+
+        stringstream ss(buf);
+        while (ss >> buf)
+        msg.push_back(buf);
+        fill_n(buf, BUFSIZE, NULL);
+
+        command = msg[0];
+
+        if (command == "Submit"){
+          msgs.push_back(combine_msg(msg));
+        }
+
+        msg.clear();
+
+        Print(msgs);
+        cout << endl;
       }    
     }
   }
+}
+
+string Server::combine_msg(vector<string> msg){
+  string result = "";
+  for (int i=2; i < msg.size(); i++){
+    result = result + msg[i];
+  }
+
+  return result;
 }
 
 int main(int argc, char *argv[]) {
@@ -82,3 +118,8 @@ int main(int argc, char *argv[]) {
   return 0;
 }
 
+void Print (const vector<string>& v){
+  for (int i=0; i<v.size();i++){
+    cout << v[i] << " ";
+  }
+}
