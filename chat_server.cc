@@ -67,6 +67,7 @@ int Server::start_server(int tcpsocket){
         printf("accept: %s\n", strerror(errno));
       FD_SET(ssock, &afds);
 
+      clients[ssock] = 0;
     }
 
     for (fd=0; fd<nfds; ++fd){
@@ -83,11 +84,26 @@ int Server::start_server(int tcpsocket){
 
         if (command == "Submit"){
           msgs.push_back(combine_msg(msg));
+          Print(msgs);
+        } else if (command == "GetNext"){
+          if (clients[ssock] == msgs.size() - 1){
+            cout << "-1" << endl;
+            break;
+          }
+          cout << "Last message was: " << msgs[clients[ssock] + 1];
+          clients[ssock] += 1;
+        } else if (command == "GetAll"){
+          if (clients[ssock] == msgs.size() - 1){
+            cout << "-1" << endl;
+            break;
+          }
+          for (int i = clients[ssock]; i < msgs.size(); i++){
+            cout << msgs[i] << endl;
+          }
+          clients[ssock] = msgs.size() - 1;
         }
 
         msg.clear();
-
-        Print(msgs);
         cout << endl;
       }    
     }
