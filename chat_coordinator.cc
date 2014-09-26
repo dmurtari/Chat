@@ -27,6 +27,7 @@ using namespace std;
 #define SERVICE_PORT  21234
 #define MAXLEN 80
 #define BUFSIZE 2048
+#define QUEUE_LEN 32
 
 void Print (const vector<string>& v);
 
@@ -36,7 +37,7 @@ class Coordinator{
     int start_coordinator();
     uint16_t start_chat(string chat_name);
     uint16_t find_chat(string chat_name);
-    uint16_t passivesock();
+    int passivesock();
 };
 
 int Coordinator::start_coordinator(){
@@ -111,6 +112,8 @@ int Coordinator::start_coordinator(){
 
 uint16_t Coordinator::start_chat(string chat_name){
   pid_t pid;
+  int tcp_sock;
+  struct sockaddr_in sin;
   char arg[BUFSIZE];
   char buf1[BUFSIZE];
 
@@ -118,25 +121,21 @@ uint16_t Coordinator::start_chat(string chat_name){
     cout << "Chat " << chat_name << " already exists." << endl;
     return 0;
   } else {
+    tcp_sock = passivesock();
     if((pid = fork()) < 0)
       cout << "Fork failed" << endl;
     if (pid == 0){
-      sprintf(arg, "%d", sessions[chat_name]);
+      sprintf(arg, "%d", tcp_sock);
       if(execl("chat_server", arg, NULL) < 0)
         cout << "Exec failed" << endl;
     }
 
-    int pipe = open("/tmp/myFIFO", O_RDONLY);
-    read(pipe, buf1, BUFSIZE);
-    close(pipe);
+    int socklen = sizeof(sin);
+    if (getsockname(tcp_sock, (struct sockaddr *)&sin,  (socklen_t*)&socklen) < 0) {
+        printf("getsockname: %s\n", strerror(errno));
+    }
 
-    stringstream strValue;
-    strValue << buf1;
-
-    uint16_t port;
-    strValue >> port;
-
-    sessions[chat_name] = port;
+    sessions[chat_name] = ntohs(sin.sin_port);
     return sessions[chat_name];
   }
 }
@@ -152,7 +151,7 @@ uint16_t Coordinator::find_chat(string chat_name){
 }
 
 
-uint16_t Coordinator::passivesock(){
+int Coordinator::passivesock(){
   struct sockaddr_in sin; /* an Internet endpoint address  */
   int     s;              /* socket descriptor             */
 
@@ -171,11 +170,9 @@ uint16_t Coordinator::passivesock(){
     cout << "binding failed" << endl;
   }
 
-  socklen_t socklen = sizeof(sin);
-  getsockname(s, (struct sockaddr *)&sin, &socklen);
-  s = ntohs(sin.sin_port);
+  if (listen(s, QUEUE_LEN) < 0)
+    printf("can't listen on %d port: %s\n", sin.sin_port, strerror(errno));
 
-  cout << "bound to port " << s << endl;
   return s;
 }
 

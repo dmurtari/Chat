@@ -6,8 +6,10 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h> 
+
 #include <string>
 #include <iostream>
+#include <sstream>
 
 using namespace std;
 
@@ -15,15 +17,20 @@ using namespace std;
 #define MAXLEN 80
 #define SERVICE_PORT  21234
 
-int main(void) {
+int main(int argc, char *argv[]) {
   struct sockaddr_in myaddr, remaddr;
   string msg;
+  int port;
   int fd, i;
   socklen_t slen=sizeof(remaddr);
   char buf[BUFSIZE];
   int recvlen;
   size_t msglen;
-  char *coordinator = "127.0.0.1";
+  char *coordinator = argv[1];
+  stringstream strValue; 
+
+  strValue << argv[2];
+  strValue >> port;
 
   if ((fd=socket(AF_INET, SOCK_DGRAM, 0))==-1)
     printf("socket created\n");
@@ -40,7 +47,8 @@ int main(void) {
 
   memset((char *) &remaddr, 0, sizeof(remaddr));
   remaddr.sin_family = AF_INET;
-  remaddr.sin_port = htons(SERVICE_PORT);
+  remaddr.sin_port = htons(port);
+  
   if (inet_aton(coordinator, &remaddr.sin_addr)==0) {
     fprintf(stderr, "inet_aton() failed\n");
     exit(1);

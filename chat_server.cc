@@ -16,6 +16,7 @@
 #include <stdio.h>
 
 #include <iostream>
+#include <sstream>
 #include <string>
 
 #define BUFSIZE 2048
@@ -23,60 +24,65 @@
 using namespace std;
 
 class Server{
-    uint16_t passivesock();
-  public:
-    int start_server();
+    int echo(int fd);
+  public: 
+    int start_server(int tcpsocket);
 };
 
-int Server::start_server(){
-  char  *portnum = "5004";  
-  struct sockaddr_in fsin; 
-  char buf[BUFSIZE];
-
-  uint16_t port = passivesock();
-  sprintf(buf, "%d", port);
-
-  mkfifo("/tmp/myFIFO", 0666);
-  int pipe = open("/tmp/myFIFO", O_WRONLY);
-  write(pipe, buf, sizeof(buf));
-  close(pipe);
+int Server::start_server(int tcpsocket){
+  struct sockaddr_in fsin;  /* the from address of a client */
+  int msock;      /* master server socket   */
+  fd_set  rfds;     /* read file descriptor set */
+  fd_set  afds;     /* active file descriptor set */
+  unsigned int  alen;   /* from-address length    */
+  int fd, nfds;
   
-  while (true) {
-    
-  }
+  msock = tcpsocket;
+  nfds = getdtablesize();
+  FD_ZERO(&afds);
+  FD_SET(msock, &afds);
 
-  return 0;
+
+  cout << "Starting server" << endl;
+  
+  while (1) {
+    memcpy(&rfds, &afds, sizeof(rfds));
+
+    if (select(nfds, &rfds, (fd_set *)0, (fd_set *)0, (struct timeval *)0) < 0)
+      printf("select: %s\n", strerror(errno));
+    if (FD_ISSET(msock, &rfds)) {
+      int ssock;
+
+      alen = sizeof(fsin);
+      ssock = accept(msock, (struct sockaddr *)&fsin, &alen);
+      if (ssock < 0)
+        printf("accept: %s\n", strerror(errno));
+      FD_SET(ssock, &afds);
+    }
+
+    for (fd=0; fd<nfds; ++fd)
+      if (fd != msock && FD_ISSET(fd, &rfds))
+        if (echo(fd) == 0) {
+          (void) close(fd);
+          FD_CLR(fd, &afds);
+        }
+  }
 }
 
-uint16_t Server::passivesock(){
-  struct sockaddr_in sin; /* an Internet endpoint address  */
-  int     s;              /* socket descriptor             */
-
-  memset(&sin, 0, sizeof(sin));
-  sin.sin_family = AF_INET;
-  sin.sin_addr.s_addr = INADDR_ANY;
-  sin.sin_port = htons(0);
-
-  /* Allocate a socket */
-  s = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-  if (s < 0)
-    cout << "can't create socket" << endl;
-
-  /* Bind the socket */
-  if (bind(s, (struct sockaddr *)&sin, sizeof(sin)) < 0){
-    cout << "binding failed" << endl;
-  }
-
-  socklen_t socklen = sizeof(sin);
-  getsockname(s, (struct sockaddr *)&sin, &socklen);
-  s = ntohs(sin.sin_port);
-
-  cout << "bound to port " << s << endl;
-  return s;
+int Server::echo(int fd){
+  cout << "Echo" << endl;
 }
 
-int main(int argc, char *argv[]){
+int main(int argc, char *argv[]) {
+  stringstream strValue; 
+  int msock;
   Server server;
-  server.start_server();
+
+  strValue << argv[1];
+  strValue >> msock;
+
+  server.start_server(msock);
+
   return 0;
 }
+
