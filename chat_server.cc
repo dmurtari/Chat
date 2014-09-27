@@ -39,14 +39,16 @@ class Server{
 };
 
 int Server::start_server(int tcpsocket){
-  char buf[BUFSIZE];
+  char buf[BUFSIZE], sendbuf[BUFSIZE];
   struct sockaddr_in fsin;  /* the from address of a client */
   int msock, ssock;      /* master server socket   */
   fd_set  rfds;     /* read file descriptor set */
   fd_set  afds;     /* active file descriptor set */
   unsigned int  alen;   /* from-address length    */
   int fd, nfds;
+  string result;
   string command, char_count;
+  socklen_t slen=sizeof(fsin);
 
   msock = tcpsocket;
 
@@ -87,22 +89,46 @@ int Server::start_server(int tcpsocket){
           Print(msgs);
         } else if (command == "GetNext"){
           if (clients[ssock] == msgs.size() - 1){
+            result = -1;
             cout << "-1" << endl;
-            break;
+          } else {
+            result = msgs[clients[ssock]];
+            cout << "Last message was: " << msgs[clients[ssock]];
+            clients[ssock] += 1;
           }
-          cout << "Last message was: " << msgs[clients[ssock] + 1];
-          clients[ssock] += 1;
+          int msglen = result.copy(sendbuf, result.length(), 0);
+          if (sendto(ssock, sendbuf, BUFSIZE, 0, (struct sockaddr *)&fsin, slen)==-1) {
+            perror("sendto");
+            exit(1);
+          }        
         } else if (command == "GetAll"){
           if (clients[ssock] == msgs.size() - 1){
             cout << "-1" << endl;
-            break;
+            int msglen = result.copy(sendbuf, result.length(), 0);
+            if (sendto(ssock, sendbuf, BUFSIZE, 0, (struct sockaddr *)&fsin, slen)==-1) {
+                perror("sendto");
+                exit(1);
+              }
+          } else {
+            for (int i = clients[ssock]; i < msgs.size(); i++){
+              result = msgs[i];
+              int msglen = result.copy(sendbuf, result.length(), 0);
+              if (sendto(ssock, sendbuf, BUFSIZE, 0, (struct sockaddr *)&fsin, slen)==-1) {
+                perror("sendto");
+                exit(1);
+              }
+            }
+            result = -1;
+            int msglen = result.copy(sendbuf, result.length(), 0);
+              if (sendto(ssock, sendbuf, BUFSIZE, 0, (struct sockaddr *)&fsin, slen)==-1) {
+                perror("sendto");
+                exit(1);
+              }
+            clients[ssock] = msgs.size() - 1;
           }
-          for (int i = clients[ssock]; i < msgs.size(); i++){
-            cout << msgs[i] << endl;
-          }
-          clients[ssock] = msgs.size() - 1;
         }
 
+        fill_n(sendbuf, BUFSIZE, NULL); 
         msg.clear();
         cout << endl;
       }    

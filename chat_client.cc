@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
   int port;
   int udp_sock, tcp_sock, i;
   socklen_t slen=sizeof(remaddr);
-  char buf[BUFSIZE], buf1[BUFSIZE];
+  char buf[BUFSIZE], buf1[BUFSIZE], recbuf[BUFSIZE];
   int recvlen;
   vector<string> msg_vec;
   size_t msglen;
@@ -71,31 +71,54 @@ int main(int argc, char *argv[]) {
       msg_vec.push_back(buf1);
     fill_n(buf1, BUFSIZE, NULL); 
 
+    cout << "Command is " << msg_vec[0] << endl;
+
     if (msg_vec[0] == "Start" || msg_vec[0] == "Find"){
       if (sendto(udp_sock, buf, MAXLEN, 0, (struct sockaddr *)&remaddr, slen)==-1) {
         perror("sendto");
         exit(1);
       }
-
       recvlen = recvfrom(udp_sock, buf, BUFSIZE, 0, (struct sockaddr *)&remaddr, &slen);
       if (recvlen >= 0) {
         buf[recvlen] = 0;
-        printf("Coordinator received message: \"%s\"\n", buf);
+        cout << "Port: " << buf << endl;
       }
     } else if (msg_vec[0] == "Submit"){
       if (!started_sock){
         tcp_sock = connectsock("localhost", port);
         started_sock = true;
       }
-      cout << "Writing " << buf << " to socket" << endl;
       int nbytes = write(tcp_sock, buf, BUFSIZE);
+    } else if (msg_vec[0] == "GetNext" || msg_vec[0] == "GetAll") {
+      if (sendto(tcp_sock, buf, MAXLEN, 0, (struct sockaddr *)&remaddr, slen)==-1) {
+        perror("sendto");
+        exit(1);
+      }
+
+      if (msg_vec[0] == "GetAll"){
+        while (buf != "-1") {
+          recvlen = recvfrom(tcp_sock, buf, BUFSIZE, 0, (struct sockaddr *)&remaddr, &slen);
+          if (recvlen >= 0) {
+            buf[recvlen] = 0;
+            cout << ">> " << buf << endl;
+          }
+        }
+      } else {
+        recvlen = recvfrom(tcp_sock, buf, BUFSIZE, 0, (struct sockaddr *)&remaddr, &slen);
+        if (recvlen >= 0) {
+          buf[recvlen] = 0;
+          cout << ">> " << buf << endl;
+        }
+      }
     } else {
       cout << "Command not recognized" << endl;
     }
 
-    
     fill_n(buf, msglen, NULL); 
+    fill_n(buf1, BUFSIZE, NULL);
+    msg_vec.clear();
   }
+  
   close(udp_sock);
   return 0;
 }
