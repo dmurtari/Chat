@@ -75,7 +75,6 @@ int Server::start_server(int tcpsocket){
     for (fd=0; fd<nfds; ++fd){
       if (fd != msock && FD_ISSET(fd, &rfds)){
         int nbytes = read(ssock, buf, BUFSIZE);
-        cout << "Read " << buf << endl;
 
         stringstream ss(buf);
         while (ss >> buf)
@@ -102,14 +101,25 @@ int Server::start_server(int tcpsocket){
             exit(1);
           }        
         } else if (command == "GetAll"){
-          if (clients[ssock] == msgs.size() - 1){
+          int nummessages = msgs.size() - clients[ssock];
+          cout << nummessages << " is nummessages" << endl;
+          if (nummessages == 0){
             cout << "-1" << endl;
             int msglen = result.copy(sendbuf, result.length(), 0);
             if (sendto(ssock, sendbuf, BUFSIZE, 0, (struct sockaddr *)&fsin, slen)==-1) {
                 perror("sendto");
                 exit(1);
-              }
+            }
           } else {
+            cout << "1" << endl;
+            char nummsgs[15];
+            sprintf(nummsgs, "%d", nummessages);
+
+            if (sendto(ssock, nummsgs, BUFSIZE, 0, (struct sockaddr *)&fsin, slen)==-1) {
+                perror("sendto");
+                exit(1);
+            }
+
             for (int i = clients[ssock]; i < msgs.size(); i++){
               result = msgs[i];
               int msglen = result.copy(sendbuf, result.length(), 0);
@@ -117,6 +127,7 @@ int Server::start_server(int tcpsocket){
                 perror("sendto");
                 exit(1);
               }
+              fill_n(sendbuf, BUFSIZE, NULL); 
             }
             result = -1;
             int msglen = result.copy(sendbuf, result.length(), 0);
@@ -124,7 +135,7 @@ int Server::start_server(int tcpsocket){
                 perror("sendto");
                 exit(1);
               }
-            clients[ssock] = msgs.size() - 1;
+            clients[ssock] = msgs.size();
           }
         }
 

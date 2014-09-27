@@ -81,35 +81,55 @@ int main(int argc, char *argv[]) {
       recvlen = recvfrom(udp_sock, buf, BUFSIZE, 0, (struct sockaddr *)&remaddr, &slen);
       if (recvlen >= 0) {
         buf[recvlen] = 0;
-        cout << "Port: " << buf << endl;
+        sscanf(buf, "%d", &port);
+        cout << "Port: " << port << endl;
+        tcp_sock = connectsock("localhost", port);
+        started_sock = true;
       }
+    
     } else if (msg_vec[0] == "Submit"){
       if (!started_sock){
         tcp_sock = connectsock("localhost", port);
         started_sock = true;
       }
       int nbytes = write(tcp_sock, buf, BUFSIZE);
-    } else if (msg_vec[0] == "GetNext" || msg_vec[0] == "GetAll") {
+    
+    } else if (msg_vec[0] == "GetAll"){
       if (sendto(tcp_sock, buf, MAXLEN, 0, (struct sockaddr *)&remaddr, slen)==-1) {
         perror("sendto");
         exit(1);
       }
+      recvlen = recvfrom(tcp_sock, buf, BUFSIZE, 0, (struct sockaddr *)&remaddr, &slen);
+      int unreadcount;
+      stringstream strValue;
 
-      if (msg_vec[0] == "GetAll"){
-        while (buf != "-1") {
-          recvlen = recvfrom(tcp_sock, buf, BUFSIZE, 0, (struct sockaddr *)&remaddr, &slen);
-          if (recvlen >= 0) {
-            buf[recvlen] = 0;
-            cout << ">> " << buf << endl;
-          }
-        }
-      } else {
+      strValue << buf;
+      strValue >> unreadcount;
+      
+      if (recvlen >= 0) {
+        buf[recvlen] = 0;
+        cout << ">> Unread Messages: " << unreadcount << endl;
+      }
+
+      for (int i = 0; i < unreadcount; i++) {
         recvlen = recvfrom(tcp_sock, buf, BUFSIZE, 0, (struct sockaddr *)&remaddr, &slen);
         if (recvlen >= 0) {
           buf[recvlen] = 0;
           cout << ">> " << buf << endl;
         }
       }
+    
+    } else if (msg_vec[0] == "GetNext") {
+      if (sendto(tcp_sock, buf, MAXLEN, 0, (struct sockaddr *)&remaddr, slen)==-1) {
+        perror("sendto");
+        exit(1);
+      }
+      recvlen = recvfrom(tcp_sock, buf, BUFSIZE, 0, (struct sockaddr *)&remaddr, &slen);
+      if (recvlen >= 0) {
+        buf[recvlen] = 0;
+        cout << ">> " << buf << endl;
+      }
+    
     } else {
       cout << "Command not recognized" << endl;
     }
