@@ -81,11 +81,19 @@ int main(int argc, char *argv[]) {
         buf[recvlen] = 0;
         sscanf(buf, "%d", &port);
         cout << "Port: " << port << endl;
+        if (port == -1){
+          cout << "Server already exists or cannot be found" << endl;
+        }
         tcp_sock = connectsock("localhost", port);
         cout << "started socket" << endl;
         started_sock = true;
       }
-    
+      if (port != -1){
+        if (msg_vec[0] == "Start")
+          cout << "A new chat session " << msg_vec[1] << " has been created and you have joined this session" << endl;
+        else
+          cout << "You have joined the chat session " << msg_vec[1] << endl;
+      }
     } else if (msg_vec[0] == "Submit"){
       if (!started_sock){
         tcp_sock = connectsock("localhost", port);
