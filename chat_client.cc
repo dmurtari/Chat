@@ -143,6 +143,7 @@ int main(int argc, char *argv[]) {
         exit(1);
       }
       cout << "Left the chat" << endl;
+      close(tcp_sock);
       return 0;
     } else {
       cout << "Command not recognized" << endl;

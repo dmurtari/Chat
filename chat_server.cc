@@ -46,22 +46,27 @@ int Server::start_server(int tcpsocket){
   fd_set  afds;     /* active file descriptor set */
   unsigned int  alen;   /* from-address length    */
   int fd, nfds;
+  int timeout = 1;
   string result;
   string command, char_count;
   socklen_t slen=sizeof(fsin);
-
+  struct timeval tv;
   msock = tcpsocket;
 
   nfds = getdtablesize();
   FD_ZERO(&afds);
-  FD_SET(msock, &afds);
+  FD_SET(msock, &afds); 
 
   while (1) {
+    struct timeval tv;
     memcpy(&rfds, &afds, sizeof(rfds));
 
-    if (select(nfds, &rfds, (fd_set *)0, (fd_set *)0,
-        (struct timeval *)0) < 0)
+    tv.tv_sec = 10;
+    tv.tv_usec = 0;
+
+    if (((timeout = select(nfds, &rfds, (fd_set *)0, (fd_set *)0, &tv)) < 0))
       printf("select: %s\n", strerror(errno));
+
     if (FD_ISSET(msock, &rfds)) {
       alen = sizeof(fsin);
       ssock = accept(msock, (struct sockaddr *)&fsin, &alen);
@@ -73,6 +78,10 @@ int Server::start_server(int tcpsocket){
     }
 
     for (fd=0; fd<nfds; ++fd){
+      if (timeout == 0){
+        cout << fd << " timed out" << endl;
+        close(fd);
+      }
       if (fd != msock && FD_ISSET(fd, &rfds)){
         int nbytes = read(ssock, buf, BUFSIZE);
 
@@ -132,6 +141,7 @@ int Server::start_server(int tcpsocket){
             clients[ssock] = msgs.size();
           }
         } else if (command == "Leave") {
+          clients.erase(ssock);
           close(ssock);
         }
 
