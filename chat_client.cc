@@ -71,8 +71,6 @@ int main(int argc, char *argv[]) {
       msg_vec.push_back(buf1);
     fill_n(buf1, BUFSIZE, NULL); 
 
-    cout << "Command is " << msg_vec[0] << endl;
-
     if (msg_vec[0] == "Start" || msg_vec[0] == "Find"){
       if (sendto(udp_sock, buf, MAXLEN, 0, (struct sockaddr *)&remaddr, slen)==-1) {
         perror("sendto");
@@ -131,6 +129,13 @@ int main(int argc, char *argv[]) {
         cout << ">> " << buf << endl;
       }
     
+    } else if (msg_vec[0] == "Leave") {
+      if (sendto(tcp_sock, buf, MAXLEN, 0, (struct sockaddr *)&remaddr, slen)==-1) {
+        perror("sendto");
+        exit(1);
+      }
+      cout << "Left the chat" << endl;
+      return 0;
     } else {
       cout << "Command not recognized" << endl;
     }

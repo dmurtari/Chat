@@ -131,6 +131,8 @@ int Server::start_server(int tcpsocket){
             }
             clients[ssock] = msgs.size();
           }
+        } else if (command == "Leave") {
+          close(ssock);
         }
 
         fill_n(sendbuf, BUFSIZE, NULL); 
