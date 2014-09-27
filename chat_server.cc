@@ -82,12 +82,12 @@ int Server::start_server(int tcpsocket){
         fill_n(buf, BUFSIZE, NULL);
 
         command = msg[0];
-
+        cout << "Received a " << command << " command" << endl;
         if (command == "Submit"){
           msgs.push_back(combine_msg(msg));
           Print(msgs);
         } else if (command == "GetNext"){
-          if (clients[ssock] == msgs.size() - 1){
+          if (clients[ssock] == msgs.size()){
             result = -1;
             cout << "-1" << endl;
           } else {
@@ -129,19 +129,12 @@ int Server::start_server(int tcpsocket){
               }
               fill_n(sendbuf, BUFSIZE, NULL); 
             }
-            result = -1;
-            int msglen = result.copy(sendbuf, result.length(), 0);
-              if (sendto(ssock, sendbuf, BUFSIZE, 0, (struct sockaddr *)&fsin, slen)==-1) {
-                perror("sendto");
-                exit(1);
-              }
             clients[ssock] = msgs.size();
           }
         }
 
         fill_n(sendbuf, BUFSIZE, NULL); 
         msg.clear();
-        cout << endl;
       }    
     }
   }

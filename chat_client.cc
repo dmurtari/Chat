@@ -84,6 +84,7 @@ int main(int argc, char *argv[]) {
         sscanf(buf, "%d", &port);
         cout << "Port: " << port << endl;
         tcp_sock = connectsock("localhost", port);
+        cout << "started socket" << endl;
         started_sock = true;
       }
     
