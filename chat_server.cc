@@ -41,6 +41,7 @@ class Server{
 int Server::start_server(int tcpsocket){
   char buf[BUFSIZE], sendbuf[BUFSIZE];
   struct sockaddr_in fsin;  /* the from address of a client */
+  struct sockaddr_in coordsock;
   int msock, ssock;      /* master server socket   */
   fd_set  rfds;     /* read file descriptor set */
   fd_set  afds;     /* active file descriptor set */
@@ -61,7 +62,7 @@ int Server::start_server(int tcpsocket){
     struct timeval tv;
     memcpy(&rfds, &afds, sizeof(rfds));
 
-    tv.tv_sec = 10;
+    tv.tv_sec = 60;
     tv.tv_usec = 0;
 
     if (((timeout = select(nfds, &rfds, (fd_set *)0, (fd_set *)0, &tv)) < 0))
@@ -167,6 +168,7 @@ int main(int argc, char *argv[]) {
   Server server;
 
   cout << "argv is " << argv[0]  << endl;
+  cout << "charname is " << argv[1] << endl;
 
   strValue << argv[0];
   strValue >> msock;

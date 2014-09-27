@@ -144,8 +144,9 @@ int main(int argc, char *argv[]) {
       }
       cout << "Left the chat" << endl;
       close(tcp_sock);
-      return 0;
-    } else {
+    } else if (msg_vec[0] == "Exit") {
+      return 1;
+    }else {
       cout << "Command not recognized" << endl;
     }
 
